@@ -10,13 +10,12 @@ import 'services/storage_service.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Lock to portrait orientation
-  await SystemChrome.setPreferredOrientations([
+  // Non-blocking system UI and orientation configuration
+  SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
 
-  // Set system overlay style for gradient backgrounds
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -24,12 +23,14 @@ void main() async {
     ),
   );
 
-  // ── Initialize services ──────────────────────────────────────────────────
+  // ── Initialize services concurrently ─────────────────────────────────────
   final storage = StorageService();
-  await storage.init();
-
   final connectivity = ConnectivityService();
-  await connectivity.init();
+
+  await Future.wait([
+    storage.init(),
+    connectivity.init(),
+  ]);
 
   final rateService = ExchangeRateService(storage);
 
@@ -42,7 +43,7 @@ void main() async {
     connectivity: connectivity,
   );
 
-  // ── Launch app ───────────────────────────────────────────────────────────
+  // ── Launch app immediately ───────────────────────────────────────────────
   runApp(
     CoinverterApp(
       storageService: storage,
